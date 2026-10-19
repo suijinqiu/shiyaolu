@@ -1,0 +1,293 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>识药录 · 中药认知与安全指引</title>
+<meta name="description" content="中药功效、辨识要点与用药禁忌的通识查询站：可按功效、性味、毒性筛选，支持症状速查、辨药小测与多药对比。">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+<!-- 首访引导 -->
+<div class="intro" id="intro" hidden>
+  <div class="intro-card" role="dialog" aria-modal="true" aria-labelledby="introTitle">
+    <p class="intro-kicker">第一次来？三步就够了</p>
+    <h2 id="introTitle">先认识，再判断，最后才考虑用</h2>
+    <ol class="intro-steps">
+      <li><span class="num">1</span><div><b>搜或筛</b><p>按名字、拼音搜；也可以按功效、性味、毒性筛。不知道从哪开始，就用「症状速查」。</p></div></li>
+      <li><span class="num">2</span><div><b>看三件事</b><p>每味药的详情分四页：功效主治、辨识要点、用药注意、配伍。先看「用药注意」。</p></div></li>
+      <li><span class="num">3</span><div><b>记住红线</b><p>有毒药材、十八反、妊娠禁忌在「安全须知」里单列。任何情况下都不要自行配药。</p></div></li>
+    </ol>
+    <div class="intro-foot">
+      <label class="check"><input type="checkbox" id="introNever"> 不再提示</label>
+      <button class="btn primary" id="introStart">开始探索</button>
+    </div>
+  </div>
+</div>
+
+<header class="top">
+  <div class="top-inner">
+    <a class="brand" href="#" data-go="explore" aria-label="返回探索">
+      <span class="seal" aria-hidden="true">药</span>
+      <span class="brand-text">
+        <b>识药录</b>
+        <small>中药认知 · 辨识 · 安全</small>
+      </span>
+    </a>
+
+    <div class="search" role="search">
+      <svg viewBox="0 0 20 20" aria-hidden="true"><circle cx="9" cy="9" r="6"/><path d="M13.5 13.5 18 18"/></svg>
+      <input id="q" type="search" placeholder="搜药材、拼音、功效、症状…  ( / 聚焦 )" autocomplete="off" aria-label="搜索药材">
+      <button id="qClear" class="q-clear" hidden aria-label="清空搜索">×</button>
+    </div>
+
+    <nav class="nav" aria-label="主导航">
+      <button class="nav-btn is-on" data-go="explore">探索</button>
+      <button class="nav-btn" data-go="symptom">症状速查</button>
+      <button class="nav-btn" data-go="wizard">辨识向导</button>
+      <button class="nav-btn" data-go="quiz">辨识训练</button>
+      <button class="nav-btn" data-go="compare">对比 <span id="cmpCount" class="pill" hidden>0</span></button>
+      <button class="nav-btn" data-go="safety">安全须知</button>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <!-- 探索 -->
+  <section class="view" id="view-explore">
+    <div class="hero">
+      <div class="hero-copy">
+        <h1>把中药看懂，再谈用它</h1>
+        <p><span id="heroCount">64</span> 味常用药材的功效主治、性状辨识与用药红线，一处查清。所有内容为通识学习资料，<b>不构成诊疗建议</b>。</p>
+        <div class="hero-actions">
+          <button class="btn primary" data-go="symptom">从症状开始</button>
+          <button class="btn ghost" data-go="quiz">测测辨药眼力</button>
+        </div>
+      </div>
+      <div class="hero-stats" id="heroStats"></div>
+    </div>
+
+    <div class="filters" id="filters">
+      <div class="filter-row" data-group="cat">
+        <span class="filter-label">功效</span>
+        <div class="chips" id="chipsCat"></div>
+      </div>
+      <div class="filter-row" data-group="nature">
+        <span class="filter-label">性味</span>
+        <div class="chips" id="chipsNature"></div>
+      </div>
+      <div class="filter-row" data-group="tox">
+        <span class="filter-label">安全性</span>
+        <div class="chips" id="chipsTox"></div>
+      </div>
+    </div>
+
+    <div class="result-bar">
+      <p id="resultText">全部药材</p>
+      <div class="result-tools">
+        <button class="link-btn" id="favOnly" aria-pressed="false">只看收藏</button>
+        <button class="link-btn" id="resetFilters" hidden>清除筛选</button>
+      </div>
+    </div>
+
+    <div class="grid" id="grid" aria-live="polite"></div>
+    <p class="empty" id="empty" hidden>没有匹配的药材。试试换个关键词，或清除筛选。</p>
+  </section>
+
+  <!-- 症状速查 -->
+  <section class="view" id="view-symptom" hidden>
+    <div class="section-head">
+      <h2>症状速查</h2>
+      <p>选一个不适，看看传统上与之相关的药材。<b>这一步只做检索，不是用药建议</b>——同名症状的病因可能完全不同。</p>
+    </div>
+    <div class="symptom-grid" id="symptomGrid"></div>
+    <div id="symptomResult" class="symptom-result" hidden>
+      <div class="section-head tight">
+        <h3 id="symptomTitle"></h3>
+        <p id="symptomNote"></p>
+      </div>
+      <div class="grid" id="symptomHerbs"></div>
+      <div class="warn-box">
+        <b>为什么不能照着买？</b>
+        <p>同样是「咳嗽」，风寒、风热、燥咳、痰湿的用药方向相反；同样「上火」，实火与虚火治法不同。同类症状下用错药，可能加重病情。请由中医师辨证后决定。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 辨识向导 -->
+  <section class="view" id="view-wizard" hidden>
+    <div class="section-head">
+      <h2>辨识向导</h2>
+      <p>先看手里的是<b>哪个部位</b>，再逐条比对特征。这一步的目的不是"认出它是什么"，而是先判断<b>能不能排除有毒混淆品</b>——排除不了，就不要用。</p>
+    </div>
+    <div class="wizard">
+      <div class="wizard-step">
+        <h3><span class="num">1</span> 选药用部位</h3>
+        <div class="chips" id="wizParts"></div>
+        <p class="wiz-note" id="wizPartNote"></p>
+      </div>
+      <div class="wizard-step" id="wizStep2" hidden>
+        <h3><span class="num">2</span> 对特征：断面 / 气味 / 表面</h3>
+        <p class="wiz-hint">下面每一行是候选药材的关键特征。<b>找到全部特征都吻合的一项为止；只要有一项对不上，就继续往下看。</b></p>
+        <div class="wiz-list" id="wizCandidates"></div>
+      </div>
+      <div class="wizard-warn">
+        <b>排除不了怎么办</b>
+        <p>把药材收起来，带去中药房或医院药房请药师看实物。凭照片、凭气味"大概是"的用法，是中药中毒最常见的原因。</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 辨识训练 -->
+  <section class="view" id="view-quiz" hidden>
+    <div class="section-head">
+      <h2>辨识训练</h2>
+      <p>10 道题，考的是「断面特征」「毒性」「十八反」这类容易被忽略的硬知识。</p>
+    </div>
+    <div class="quiz-card" id="quizCard">
+      <div class="quiz-top">
+        <span id="quizProgress">第 1 / 10 题</span>
+        <span id="quizScore">答对 0</span>
+      </div>
+      <div class="quiz-bar"><i id="quizBar" style="width:0%"></i></div>
+      <h3 id="quizQ"></h3>
+      <div class="quiz-options" id="quizOptions"></div>
+      <div class="quiz-feedback" id="quizFeedback" hidden></div>
+      <div class="quiz-actions">
+        <button class="btn primary" id="quizNext" hidden>下一题</button>
+        <button class="btn ghost" id="quizRestart">重新开始</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 对比 -->
+  <section class="view" id="view-compare" hidden>
+    <div class="section-head">
+      <h2>多药对比</h2>
+      <p>在药材卡片上点「对比」加入（最多 3 味），横向看功效、用量与禁忌的差别。</p>
+    </div>
+    <div class="compare-wrap" id="compareWrap"></div>
+  </section>
+
+  <!-- 安全须知 -->
+  <section class="view" id="view-safety" hidden>
+    <div class="section-head">
+      <h2>安全须知</h2>
+      <p>这一页比前面几页都重要。记不住功效没关系，这些红线必须知道。</p>
+    </div>
+
+    <div class="warn-box strong">
+      <b>先读这一条</b>
+      <p>本站是通识科普，不诊断、不处方、不推荐剂量用于个人。任何药材（包括「药食同源」之品）都应在中医师或药师指导下使用；正在服西药、备孕/怀孕/哺乳、儿童、肝肾功能异常者，用药前必须咨询专业人士。</p>
+    </div>
+
+    <div class="safety-grid">
+      <article class="panel">
+        <h3>十八反 <small>配伍禁忌</small></h3>
+        <ul class="rule-list">
+          <li><b>甘草</b> 反 大戟、芫花、甘遂、海藻</li>
+          <li><b>乌头（川乌、草乌、附子）</b> 反 半夏、瓜蒌、贝母、白蔹、白及</li>
+          <li><b>藜芦</b> 反 人参、沙参、丹参、玄参、苦参、细辛、芍药</li>
+        </ul>
+        <p class="panel-note">「反」指同用可能产生毒副作用或降低疗效，属传统配伍禁忌。</p>
+      </article>
+
+      <article class="panel">
+        <h3>十九畏 <small>相畏相恶</small></h3>
+        <ul class="rule-list">
+          <li>硫黄 畏 朴硝</li>
+          <li>水银 畏 砒霜</li>
+          <li>狼毒 畏 密陀僧</li>
+          <li>巴豆 畏 牵牛子</li>
+          <li>丁香 畏 郁金</li>
+          <li>川乌、草乌 畏 犀角</li>
+          <li>牙硝 畏 三棱</li>
+          <li>官桂 畏 石脂</li>
+          <li>人参 畏 五灵脂</li>
+        </ul>
+      </article>
+
+      <article class="panel">
+        <h3>妊娠禁忌 <small>绝对慎用</small></h3>
+        <ul class="rule-list">
+          <li><b>禁用</b>：毒性强、药性峻猛者（如巴豆、斑蝥、牵牛子、大戟、商陆、麝香、三棱、水蛭）</li>
+          <li><b>慎用</b>：活血化瘀、行气破滞、辛热滑利之品（桃仁、红花、大黄、附子、肉桂、半夏、薏苡仁等）</li>
+        </ul>
+        <p class="panel-note">孕期任何用药都须经产科与中医共同评估，包括外用药与外敷包。</p>
+      </article>
+
+      <article class="panel">
+        <h3>本站收录的毒性药材</h3>
+        <ul class="rule-list" id="toxList"></ul>
+        <p class="panel-note">标注「有毒 / 小毒」者，剂量、炮制、煎法都有严格要求，<b>不可自行抓药</b>。</p>
+      </article>
+
+      <article class="panel">
+        <h3>煎服与储存要点</h3>
+        <ul class="rule-list">
+          <li>先煎：矿石、贝壳类及<b>附子</b>等需久煎减毒</li>
+          <li>后下：薄荷等含挥发油者，出锅前 5–10 分钟下</li>
+          <li>冲服：芒硝等易溶、三七粉等贵重药</li>
+          <li>另煎：人参等贵重药单独煎后兑入</li>
+          <li>储存：阴凉干燥、防潮防虫；芒硝须密闭防风化</li>
+        </ul>
+      </article>
+
+      <article class="panel">
+        <h3>出现这些情况立即停药就医</h3>
+        <ul class="rule-list">
+          <li>口舌、四肢麻木，心悸、胸闷（警惕附子类中毒）</li>
+          <li>剧烈腹痛、频繁呕吐腹泻、脱水</li>
+          <li>皮疹、面唇肿胀、呼吸困难（过敏）</li>
+          <li>尿量骤减、眼黄尿黄（肝肾功能受损信号）</li>
+        </ul>
+      </article>
+    </div>
+  </section>
+</main>
+
+<!-- 详情抽屉 -->
+<div class="drawer-mask" id="drawerMask" hidden></div>
+<aside class="drawer" id="drawer" hidden aria-labelledby="dName">
+  <div class="drawer-head">
+    <div>
+      <h2 id="dName"></h2>
+      <p id="dMeta" class="d-meta"></p>
+    </div>
+    <button class="icon-btn" id="drawerClose" aria-label="关闭详情">×</button>
+  </div>
+  <figure class="d-figure">
+    <img id="dImg" alt="" hidden>
+    <div class="d-figure-ph" id="dImgPh">
+      <span class="ph-mark" aria-hidden="true">样</span>
+      <p>暂无授权实拍图。药材照片配错的代价比没有照片更高，所以这里只放能核实来源的图——请以药典图谱或实物比对为准。</p>
+    </div>
+    <figcaption id="dImgCap"></figcaption>
+  </figure>
+  <div class="tabs" id="dTabs" role="tablist">
+    <button role="tab" class="tab is-on" data-tab="effect">功效主治</button>
+    <button role="tab" class="tab" data-tab="identify">产地与辨识</button>
+    <button role="tab" class="tab" data-tab="usage">用法忌口</button>
+    <button role="tab" class="tab" data-tab="caution">用药注意</button>
+    <button role="tab" class="tab" data-tab="pairs">配伍</button>
+  </div>
+  <div class="drawer-body" id="drawerBody"></div>
+  <div class="drawer-foot">
+    <button class="btn ghost" id="dFav">☆ 收藏</button>
+    <button class="btn primary" id="dCompare">加入对比</button>
+  </div>
+</aside>
+
+<div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+
+<footer class="foot">
+  <p><b>免责声明</b>：本站内容为中医药通识科普与药材性状识别的学习资料，不能替代执业医师的诊断与处方。请勿依此自行用药、配药或调整正在使用的药物。</p>
+  <p class="foot-meta">数据为人工整理，参考《中国药典》与通行中药学教材的描述框架 · 共 <span id="footCount"></span> 味</p>
+</footer>
+
+<script src="data.js"></script>
+<script src="data-extra.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

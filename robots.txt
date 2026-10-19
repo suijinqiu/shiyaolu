@@ -1,0 +1,5 @@
+﻿User-agent: *
+Allow: /
+Disallow: /preview/
+
+# 站点内容为中医药通识学习资料，欢迎搜索引擎收录。
